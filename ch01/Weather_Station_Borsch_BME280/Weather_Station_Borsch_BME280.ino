@@ -12,8 +12,6 @@ Written by Samuel\@Cometbid-project
 
 #include <WiFi.h>
 #include <WiFiMulti.h>
-#include <ESPAsyncWebServer.h>
-#include <ESPAsync_WiFiManager.h>  //https://github.com/khoih-prog/ESPAsync_WiFiManager
 
 WiFiMulti wifiMulti;
 
@@ -136,7 +134,7 @@ float altitude(const float seaLevel = 1013.25) {
 
 
 String processor(const String& var) {
-  static int32_t temperature, humidity, pressure;  // Store readings
+  static int32_t temperature, humidity, pressure;         // Store readings
   BME280.getSensorData(temperature, humidity, pressure);  // Get most recent readings
 
   //Serial.println(var);
@@ -180,9 +178,8 @@ void connectToWifi() {
   WiFi.mode(WIFI_STA);
 
   // Add list of Wifi networks
-  wifiMulti.addAP("your-wifi-name", "your-wifi-password");
-  wifiMulti.addAP("another-wifi-name", "another-wifi-password");
-  //wifiMulti.addAP("ssid_from_AP_3", "your_password_for_AP_3");
+  //wifiMulti.addAP("ssid_wifi_name", "your_wifi_password");
+  //wifiMulti.addAP("ssid_wifi_name", "your_wifi_password");
 
   // WiFi.scanNetworks will returnthe number of networks found
   int n = WiFi.scanNetworks();
@@ -208,12 +205,10 @@ void connectToWifi() {
   }
 
   Serial.println("Connecting Wifi...");
+
   if (wifiMulti.run() == WL_CONNECTED) {
     Serial.println("");
-    Serial.println("WiFi connected");
-
-    Serial.println("");
-    Serial.print("Connected to ");
+    Serial.println("WiFi connected to");
     Serial.println(WiFi.SSID());
     Serial.println(WiFi.RSSI());
     Serial.print("Station IP Address: ");
@@ -272,13 +267,15 @@ void connectToWebServer() {
   }
   Serial.println("mDNS responder started, connect using : Station IP-Address or http://simple_iot.local");
 
+  handleWebServerEvents();
+
   ElegantOTA.begin(&server);  // Start ElegantOTA
 }
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(SERIAL_SPEED);
-  delay(10);
+  delay(100);
 
   Serial.println("Serial setup begins...");
 
@@ -287,7 +284,6 @@ void setup() {
   connectToWebServer();
 
   setupBMESensor();
-  handleWebServerEvents();
 }
 
 /*!
@@ -300,7 +296,6 @@ void loop() {
     static int32_t temperature, humidity, pressure;         // Store readings
     BME280.getSensorData(temperature, humidity, pressure);  // Get most recent readings
 
-    Serial.println();
     Serial.printf("Temperature = %.2f ºC \n", temperature / 100.0);
     Serial.printf("Humidity = %.2f % \n", humidity / 100.0);
     Serial.printf("Pressure = %.2f hPa \n", pressure / 100.0);
@@ -309,9 +304,9 @@ void loop() {
 
     // Send Events to the Web Server with the Sensor Readings
     events.send("ping", NULL, millis());
-    events.send(String(temperature).c_str(), "temperature", millis());
-    events.send(String(humidity).c_str(), "humidity", millis());
-    events.send(String(pressure).c_str(), "pressure", millis());
+    events.send(String(temperature / 100.0).c_str(), "temperature", millis());
+    events.send(String(humidity / 100.0).c_str(), "humidity", millis());
+    events.send(String(pressure / 100.0).c_str(), "pressure", millis());
     events.send(String(altitude()).c_str(), "altitude", millis());
     // events.send(String(gasResistance).c_str(), "gas", millis());
 
